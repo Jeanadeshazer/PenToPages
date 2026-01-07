@@ -1,20 +1,135 @@
-# 🖋️ PenToPages
-**Transforming handwritten stories into professionally printed books.**
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>PenToPages | Master Dashboard</title>
+    <style>
+        body { font-family: 'Quicksand', sans-serif; background-color: #f8fafc; }
+        .navy { background-color: #0f172a; }
+        .orange { background-color: #f97316; }
+        .orange-text { color: #f97316; }
+        .btn-hover:hover { transform: translateY(-2px); transition: 0.2s; }
+    </style>
+</head>
+<body>
 
-PenToPages is a web application designed for authors of all ages (kids and adults!) to bridge the gap between physical handwriting and digital publishing.
+    <nav class="navy p-4 text-white flex justify-between items-center shadow-lg">
+        <h1 class="text-2xl font-bold tracking-tight">PenTo<span class="orange-text">Pages</span></h1>
+        <button onclick="toggleModal()" class="orange px-6 py-2 rounded-full font-bold btn-hover shadow-lg shadow-orange-500/30">Publish to KDP</button>
+    </nav>
 
-## ✨ Key Features
-* **AI Transcription:** Convert photos of handwriting into editable text.
-* **KDP Formatting:** Automatically applies mirrored margins and gutter spacing for Amazon KDP.
-* **Mini Cover Designer:** A simplified "Canva-style" tool to design your book's front, back, and spine.
-* **Pre-Flight Checklist:** Validates your book's geometry before you export to PDF.
+    <main class="max-w-6xl mx-auto p-6 space-y-10">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">1. Upload Handwriting</h3>
+                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center bg-slate-50">
+                    <input type="file" id="fileInput" class="hidden" accept="image/*">
+                    <p id="uploadStatus" class="text-slate-400 mb-4">Upload photos of your handwritten pages</p>
+                    <button onclick="document.getElementById('fileInput').click()" class="bg-slate-800 text-white px-8 py-3 rounded-xl font-semibold btn-hover">Select Photos</button>
+                </div>
+            </div>
 
-## 🚀 Quick Start (Replit)
-1. Import this repository into **Replit**.
-2. Click the **Run** button.
-3. Open the webview to start creating your book!
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">2. AI Manuscript Review</h3>
+                <textarea id="transcriptionBox" class="flex-grow w-full h-64 p-4 bg-orange-50/50 rounded-2xl border-none focus:ring-2 focus:ring-orange-500 text-slate-700 leading-relaxed" placeholder="The AI will type your manuscript here..."></textarea>
+                <div class="mt-4 flex justify-between items-center text-sm text-slate-500">
+                    <span id="wordCount">Word Count: 0</span>
+                    <button class="orange-text font-bold hover:underline">Save Chapter</button>
+                </div>
+            </div>
+        </div>
 
-## 🛠️ Tech Stack
-* **Backend:** Python (Flask)
-* **PDF Engine:** ReportLab
-* **Frontend:** HTML5, Tailwind CSS, Canvas API
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+            <h3 class="text-xl font-bold text-slate-800 mb-6">3. Cover Designer Studio</h3>
+            <div class="flex flex-col lg:flex-row items-center gap-10">
+                <canvas id="coverCanvas" width="500" height="350" class="rounded-sm bg-white border border-slate-300 shadow-2xl"></canvas>
+                
+                <div class="w-full lg:w-80 space-y-4">
+                    <input type="text" id="titleInput" oninput="draw()" placeholder="Book Title" class="w-full p-3 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-orange-500">
+                    <input type="text" id="authorInput" oninput="draw()" placeholder="Author Name" class="w-full p-3 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-orange-500">
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-bold text-slate-500">Theme Color:</label>
+                        <input type="color" id="colorInput" oninput="draw()" value="#0f172a" class="h-10 w-10 cursor-pointer rounded">
+                    </div>
+                    <div class="p-4 bg-navy rounded-2xl text-white">
+                        <p class="text-[10px] uppercase opacity-60">KDP Print Spec</p>
+                        <p class="text-lg font-bold">Spine Width: <span class="text-orange-400">0.25"</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white max-w-sm w-full rounded-3xl p-8 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="text-2xl font-bold text-navy mb-2">Pre-Flight Passed</h3>
+            <p class="text-slate-500 text-sm mb-6">Your book is ready for Amazon KDP.</p>
+            <button class="orange w-full py-4 rounded-2xl text-white font-bold text-lg shadow-lg">Download PDF Bundle</button>
+            <button onclick="toggleModal()" class="mt-4 text-slate-400 text-sm font-bold">Back to Editor</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('coverCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Logic for File Upload
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            document.getElementById('uploadStatus').innerText = "AI is reading your handwriting...";
+
+            fetch('/upload', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('transcriptionBox').value = data.transcription;
+                    document.getElementById('uploadStatus').innerText = "Upload Complete!";
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('uploadStatus').innerText = "Error reading page.";
+                });
+        });
+
+        function draw() {
+            const title = document.getElementById('titleInput').value || "Your Book Title";
+            const author = document.getElementById('authorInput').value || "Author Name";
+            const color = document.getElementById('colorInput').value;
+
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fillRect(canvas.width/2 - 15, 0, 30, canvas.height);
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.font = "bold 24px Quicksand";
+            ctx.fillText(title, canvas.width * 0.75, canvas.height / 2.5);
+            ctx.font = "14px Quicksand";
+            ctx.fillText("by " + author, canvas.width * 0.75, canvas.height / 1.8);
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.rotate(-Math.PI/2);
+            ctx.font = "10px Quicksand";
+            ctx.fillText(title, 0, 4);
+            ctx.restore();
+        }
+
+        function toggleModal() {
+            document.getElementById('modal').classList.toggle('hidden');
+        }
+
+        draw();
+    </script>
+</body>
+</html>
