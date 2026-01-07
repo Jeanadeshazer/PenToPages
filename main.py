@@ -1,20 +1,41 @@
-# 🖋️ PenToPages
-**Transforming handwritten stories into professionally printed books.**
+import os
+from flask import Flask, render_template, request, jsonify
+from werkzeug.utils import secure_filename
 
-PenToPages is a web application designed for authors of all ages (kids and adults!) to bridge the gap between physical handwriting and digital publishing.
+app = Flask(__name__)
 
-## ✨ Key Features
-* **AI Transcription:** Convert photos of handwriting into editable text.
-* **KDP Formatting:** Automatically applies mirrored margins and gutter spacing for Amazon KDP.
-* **Mini Cover Designer:** A simplified "Canva-style" tool to design your book's front, back, and spine.
-* **Pre-Flight Checklist:** Validates your book's geometry before you export to PDF.
+# Setup folder to store uploaded handwriting photos
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
-## 🚀 Quick Start (Replit)
-1. Import this repository into **Replit**.
-2. Click the **Run** button.
-3. Open the webview to start creating your book!
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-## 🛠️ Tech Stack
-* **Backend:** Python (Flask)
-* **PDF Engine:** ReportLab
-* **Frontend:** HTML5, Tailwind CSS, Canvas API
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        
+        # Placeholder for AI Transcription logic
+        # For now, we return a success message to the dashboard
+        return jsonify({
+            "status": "success",
+            "filename": filename,
+            "transcription": "AI ANALYSIS COMPLETE: This is where the AI would turn your handwritten ink into typed text. The system has detected your handwriting and preserved your unique author voice!"
+        })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
